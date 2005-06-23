@@ -1,0 +1,41 @@
+Geo::IP2Location
+================
+
+This Perl modules provide fast lookup of country, region, city, latitude, longitude, ISP and domain name from IP address by using IP2Location database. This module uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ISP and domain name as values.
+
+This module can be used in many types of projects such as:
+
+ 1) select the geographically closest mirror
+ 2) analyze your web server logs to determine the countries of your visitors
+ 3) credit card fraud detection
+ 4) software export controls
+ 5) display native language and currency 
+ 6) prevent password sharing and abuse of service 
+ 7) geotargeting in advertisement
+
+The database will be updated in monthly basis for the greater accuracy. Free sample database is available at /data directory or download it from http://www.ip2location.com/developers.htm.
+
+The complete database is available at http://www.ip2location.com under Premium subscription package.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+The complete database is available at http://www.ip2location.com under subscription package.
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2005 by IP2Location.com, support@ip2location.com
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.6 or,
+at your option, any later version of Perl 5 you may have available.
+
+

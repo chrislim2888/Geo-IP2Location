@@ -1,0 +1,14 @@
+Revision history for Perl extension Geo::IP2Location.
+
+1.00  Wed Jun  8 16:59:58 2005
+      First release under the Geo::IP2Location
+      Added new function "open"
+      Added new function "get_country_short"
+      Added new function "get_country_long"
+      Added new function "get_region"
+      Added new function "get_city"
+      Added new function "get_isp"
+      Added new function "get_latitude"
+      Added new function "get_longitude"
+      Added new function "get_domain"
+      Added new function "get_all"
