@@ -1,5 +1,9 @@
 Revision history for Perl extension Geo::IP2Location.
 
+1.10  Wed Aug 17 16:59:58 2005
+      Second release under the Geo::IP2Location
+      Added new function "get_zipcode"
+
 1.00  Wed Jun  8 16:59:58 2005
       First release under the Geo::IP2Location
       Added new function "open"

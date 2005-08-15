@@ -3,7 +3,7 @@ package Geo::IP2Location;
 use strict;
 use vars qw(@ISA $VERSION @EXPORT);
 
-$VERSION = '1.00';
+$VERSION = '1.10';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -20,6 +20,8 @@ use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE => 5;
 use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ISP => 6;
 use constant IP_COUNTRY_REGION_CITY_ISP_DOMAIN => 7;
 use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ISP_DOMAIN => 8;
+use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ZIPCODE => 9;
+use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ZIPCODE_ISP_DOMAIN => 10;
 use constant COUNTRYSHORT => 1;
 use constant COUNTRYLONG => 2;
 use constant REGION => 3;
@@ -28,15 +30,17 @@ use constant ISP => 5;
 use constant LATITUDE => 6;
 use constant LONGITUDE => 7;
 use constant DOMAIN => 8;
+use constant ZIPCODE => 9;
 use constant ALL => 100;
 
-my @COUNTRY_POSITION = (0, 2, 2, 2, 2, 2, 2, 2, 2);
-my @REGION_POSITION = (0, 0, 0, 3, 3, 3, 3, 3, 3);
-my @CITY_POSITION = (0, 0, 0, 4, 4, 4, 4, 4, 4);
-my @ISP_POSITION = (0, 0, 3, 0, 5, 0, 7, 5, 7);
-my @LATITUDE_POSITION = (0, 0, 0, 0, 0, 5, 5, 0, 5);
-my @LONGITUDE_POSITION = (0, 0, 0, 0, 0, 6, 6, 0, 6);
-my @DOMAIN_POSITION = (0, 0, 0, 0, 0, 0, 0, 6, 8);
+my @COUNTRY_POSITION = (0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2);
+my @REGION_POSITION = (0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3);
+my @CITY_POSITION = (0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4);
+my @ISP_POSITION = (0, 0, 3, 0, 5, 0, 7, 5, 7, 0, 8);
+my @LATITUDE_POSITION = (0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 5);
+my @LONGITUDE_POSITION = (0, 0, 0, 0, 0, 6, 6, 0, 6, 6, 6);
+my @DOMAIN_POSITION = (0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 9);
+my @ZIPCODE_POSITION = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7);
 
 sub open {
   die "Geo::IP2Location::open() requires a database path name" unless( @_ > 1 and $_[1] );
@@ -98,6 +102,12 @@ sub get_latitude {
 	return $obj->get_record($ipaddr, LATITUDE);
 }
 
+sub get_zipcode {
+	my ($obj) = shift(@_);
+	my $ipaddr = shift(@_);	
+	return $obj->get_record($ipaddr, ZIPCODE);
+}
+
 sub get_longitude {
 	my ($obj) = shift(@_);
 	my $ipaddr = shift(@_);	
@@ -144,7 +154,11 @@ sub get_record {
 	}	
 	if (($mode == DOMAIN) && ($DOMAIN_POSITION[$dbtype] == 0)) {
 		return NOT_SUPPORTED;
-	}	
+	}
+	if (($mode == ZIPCODE) && ($ZIPCODE_POSITION[$dbtype] == 0)) {
+		return NOT_SUPPORTED;
+	}
+
 	if ($ipaddr eq "") {
 		return NO_IP;
 	}		
@@ -154,7 +168,6 @@ sub get_record {
 	my $baseaddr = $obj->{"databaseaddr"};
 	my $dbcount = $obj->{"databasecount"};
 	my $dbcolumn = $obj->{"databasecolumn"};
-
 
 	my $low = 0;
 	my $high = $dbcount;
@@ -187,6 +200,10 @@ sub get_record {
 		if ($mode == DOMAIN) {
 			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
 		}
+		if ($mode == ZIPCODE) {
+			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
+		}
+
 		if ($mode == ALL) {
 			my $country_short = NOT_SUPPORTED;
 			my $country_long = NOT_SUPPORTED;
@@ -196,6 +213,7 @@ sub get_record {
 			my $latitude = NOT_SUPPORTED;
 			my $longitude = NOT_SUPPORTED;
 			my $domain = NOT_SUPPORTED;
+			my $zipcode = NOT_SUPPORTED;
 			if ($COUNTRY_POSITION[$dbtype] != 0) {
 				$country_short = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
 				$country_long = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
@@ -218,7 +236,10 @@ sub get_record {
 			if ($DOMAIN_POSITION[$dbtype] != 0) {
 				$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
 			}
-			return ($country_short, $country_long, $region, $city, $latitude, $longitude, $isp, $domain);
+			if ($ZIPCODE_POSITION[$dbtype] != 0) {
+				$zipcode = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
+			}			
+			return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $isp, $domain);
 		}
 	} else {
 		while ($low <= $high) {
@@ -250,6 +271,9 @@ sub get_record {
 				if ($mode == DOMAIN) {
 					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
 				}
+				if ($mode == ZIPCODE) {
+					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
+				}				
 				if ($mode == ALL) {
 					my $country_short = NOT_SUPPORTED;
 					my $country_long = NOT_SUPPORTED;
@@ -259,6 +283,7 @@ sub get_record {
 					my $latitude = NOT_SUPPORTED;
 					my $longitude = NOT_SUPPORTED;
 					my $domain = NOT_SUPPORTED;
+					my $zipcode = NOT_SUPPORTED;
 					if ($COUNTRY_POSITION[$dbtype] != 0) {
 						$country_short = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
 						$country_long = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
@@ -281,7 +306,10 @@ sub get_record {
 					if ($DOMAIN_POSITION[$dbtype] != 0) {
 						$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
 					}
-					return ($country_short, $country_long, $region, $city, $latitude, $longitude, $isp, $domain);
+					if ($ZIPCODE_POSITION[$dbtype] != 0) {
+						$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
+					}
+					return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $isp, $domain);
 				}
 			} else {
 				if ($ipno < $ipfrom) {
@@ -375,6 +403,9 @@ Geo::IP2Location - Fast lookup of country, region, city, latitude, longitude, IS
 	my $longitude = $obj->get_longitude("20.11.187.239");
 	my $isp = $obj->get_isp("20.11.187.239");
 	my $domain = $obj->get_domain("20.11.187.239");
+	my $zipcode = $obj->get_zipcode("20.11.187.239");
+	
+	($cos, $col, $reg, $cit, $lat, $lon, $zip, $isp, $dom) = $obj->get_all("20.11.187.239");
 
 =head1 DESCRIPTION
 
@@ -444,9 +475,13 @@ Returns the ISP name for an IP address or domain name.
 
 =item $domain = $obj->get_domain( $ip );
 
-Returns the domain anme for an IP address or domain name.
+Returns the domain name for an IP address or domain name.
 
-=item ($cos, $col, $reg, $cit, $lat, $lon, $isp, $dom) = $obj->get_all( $ip );
+=item $zip = $obj->get_zipcode( $ip );
+
+Returns the ZIP code for an IP address or domain name.
+
+=item ($cos, $col, $reg, $cit, $lat, $lon, $zip, $isp, $dom) = $obj->get_all( $ip );
 
 Returns an array of country short name, country long name, region, city, latitude, longitude and domain name for an IP address.
 
@@ -456,7 +491,7 @@ http://www.ip2location.com
 
 =head1 VERSION
 
-1.00
+1.10
 
 =head1 AUTHOR
 
