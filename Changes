@@ -1,4 +1,7 @@
 Revision history for Perl extension Geo::IP2Location.
+1.20  Fri Aug 26 16:59:58 2005
+      Added new function "get_module_version"
+      Added new function "get_database_version"
 
 1.10  Wed Aug 17 16:59:58 2005
       Second release under the Geo::IP2Location

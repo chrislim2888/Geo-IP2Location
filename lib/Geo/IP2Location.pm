@@ -3,7 +3,7 @@ package Geo::IP2Location;
 use strict;
 use vars qw(@ISA $VERSION @EXPORT);
 
-$VERSION = '1.10';
+$VERSION = '1.20';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -70,6 +70,16 @@ sub get_country_short {
 	my ($obj) = shift(@_);
 	my $ipaddr = shift(@_);	
 	return $obj->get_record($ipaddr, COUNTRYSHORT);
+}
+
+sub get_module_version {
+	my ($obj) = shift(@_);
+	return $VERSION;
+}
+
+sub get_database_version {
+	my ($obj) = shift(@_);
+	return $obj->{"databaseyear"} . "." . $obj->{"databasemonth"} . "." . $obj->{"databaseday"};
 }
 
 sub get_country_long {
@@ -388,13 +398,15 @@ __END__
 
 =head1 NAME
 
-Geo::IP2Location - Fast lookup of country, region, city, latitude, longitude, ISP and domain name from IP address by using IP2Location database.
+Geo::IP2Location - Fast lookup of country, region, city, latitude, longitude, ZIP code, ISP and domain name from IP address by using IP2Location database.
 
 =head1 SYNOPSIS
 
   use Geo::IP2Location;
-	my $obj = Geo::IP2Location->open("IP-COUNTRY-REGION-CITY-LATITUDE-LONGITUDE-ISP-DOMAIN.BIN");
-
+	my $obj = Geo::IP2Location->open("IP-COUNTRY-REGION-CITY-LATITUDE-LONGITUDE-ZIPCODE-ISP-DOMAIN.BIN");
+	
+	my $dbversion = $obj->get_database_version();
+	my $moduleversion = $obj->get_module_version();
 	my $countryshort = $obj->get_country_short("20.11.187.239");
 	my $countrylong = $obj->get_country_long("20.11.187.239");
 	my $region = $obj->get_region("20.11.187.239");
@@ -404,8 +416,9 @@ Geo::IP2Location - Fast lookup of country, region, city, latitude, longitude, IS
 	my $isp = $obj->get_isp("20.11.187.239");
 	my $domain = $obj->get_domain("20.11.187.239");
 	my $zipcode = $obj->get_zipcode("20.11.187.239");
-	
+
 	($cos, $col, $reg, $cit, $lat, $lon, $zip, $isp, $dom) = $obj->get_all("20.11.187.239");
+
 
 =head1 DESCRIPTION
 
@@ -427,7 +440,7 @@ The complete database is available at
 
 http://www.ip2location.com
 
-The database will be updated in monthly basis for the greater accuracy. Free sample database is available at 
+The database will be updated in monthly basis for greater accuracy. Free sample database is available at 
 
 http://www.ip2location.com/developers.htm
 
@@ -484,6 +497,14 @@ Returns the ZIP code for an IP address or domain name.
 =item ($cos, $col, $reg, $cit, $lat, $lon, $zip, $isp, $dom) = $obj->get_all( $ip );
 
 Returns an array of country short name, country long name, region, city, latitude, longitude and domain name for an IP address.
+
+=item $dbversion = $obj->get_database_version();
+
+Returns the version number of database.
+
+=item $moduleversion = $obj->get_module_version();
+
+Returns the version number of Perl module.
 
 =head1 SEE ALSO
 
