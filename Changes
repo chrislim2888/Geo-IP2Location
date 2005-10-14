@@ -1,5 +1,13 @@
 Revision history for Perl extension Geo::IP2Location.
+
+1.30  Thu Oct 13 16:59:58 2005
+      Forth release under the Geo::IP2Location
+      Fixed get_zipcode API to report proper ZIP code
+      Fixed test data to convert from Windows file format to Unix
+      Simplify get_record() function
+
 1.20  Fri Aug 26 16:59:58 2005
+      Third release under the Geo::IP2Location
       Added new function "get_module_version"
       Added new function "get_database_version"
 

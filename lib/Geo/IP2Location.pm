@@ -3,14 +3,14 @@ package Geo::IP2Location;
 use strict;
 use vars qw(@ISA $VERSION @EXPORT);
 
-$VERSION = '1.20';
+$VERSION = '1.30';
 
 require Exporter;
 @ISA = qw(Exporter);
 
 use constant UNKNOWN => "UNKNOWN IP ADDRESS";
-use constant NOT_SUPPORTED => "This method is unavailable in selected data file. Please upgrade.";
 use constant NO_IP => "MISSING IP ADDRESS";
+use constant NOT_SUPPORTED => "This parameter is unavailable for selected data file. Please upgrade the data file.";
 use constant MAX_IP_RANGE => 4294967295;
 use constant IP_COUNTRY => 1;
 use constant IP_COUNTRY_ISP => 2;
@@ -40,7 +40,7 @@ my @ISP_POSITION = (0, 0, 3, 0, 5, 0, 7, 5, 7, 0, 8);
 my @LATITUDE_POSITION = (0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 5);
 my @LONGITUDE_POSITION = (0, 0, 0, 0, 0, 6, 6, 0, 6, 6, 6);
 my @DOMAIN_POSITION = (0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 9);
-my @ZIPCODE_POSITION = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7);
+my @ZIPCODE_POSITION = (0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7);
 
 sub open {
   die "Geo::IP2Location::open() requires a database path name" unless( @_ > 1 and $_[1] );
@@ -58,9 +58,9 @@ sub initialize {
 	my ($obj) = @_;
 	$obj->{"databasetype"} = $obj->read8($obj->{filehandle}, 1);
 	$obj->{"databasecolumn"} = $obj->read8($obj->{filehandle}, 2);
-	$obj->{"databaseday"} = $obj->read8($obj->{filehandle}, 3);
+	$obj->{"databaseyear"} = $obj->read8($obj->{filehandle}, 3);
 	$obj->{"databasemonth"} = $obj->read8($obj->{filehandle}, 4);
-	$obj->{"databaseyear"} = $obj->read8($obj->{filehandle}, 5);
+	$obj->{"databaseday"} = $obj->read8($obj->{filehandle}, 5);
 	$obj->{"databasecount"} = $obj->read32($obj->{filehandle}, 6);
 	$obj->{"databaseaddr"} = $obj->read32($obj->{filehandle}, 10);
 	return $obj;	
@@ -173,7 +173,7 @@ sub get_record {
 		return NO_IP;
 	}		
 	$ipaddr = $obj->name2ip($ipaddr);
-	my $ipno = $obj->ip2no($ipaddr);
+	my $realipno = $obj->ip2no($ipaddr);
 	my $handle = $obj->{"filehandle"};
 	my $baseaddr = $obj->{"databaseaddr"};
 	my $dbcount = $obj->{"databasecount"};
@@ -184,150 +184,89 @@ sub get_record {
 	my $mid = 0;
 	my $ipfrom = 0;
 	my $ipto = 0;
+	my $ipno = 0;
 
-	if ($ipno == MAX_IP_RANGE) {
-		if ($mode == COUNTRYSHORT) {
-			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
-		}
-		if ($mode == COUNTRYLONG) {
-			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
-		}
-		if ($mode == REGION) {
-			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($REGION_POSITION[$dbtype]-1)));
-		}
-		if ($mode == CITY) {
-			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($CITY_POSITION[$dbtype]-1)));
-		}
-		if ($mode == ISP) {
-			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ISP_POSITION[$dbtype]-1)));
-		}
-		if ($mode == LATITUDE) {
-			return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LATITUDE_POSITION[$dbtype]-1));
-		}
-		if ($mode == LONGITUDE) {
-			return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LONGITUDE_POSITION[$dbtype]-1));
-		}
-		if ($mode == DOMAIN) {
-			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
-		}
-		if ($mode == ZIPCODE) {
-			return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
-		}
-
-		if ($mode == ALL) {
-			my $country_short = NOT_SUPPORTED;
-			my $country_long = NOT_SUPPORTED;
-			my $region = NOT_SUPPORTED;
-			my $city = NOT_SUPPORTED;
-			my $isp = NOT_SUPPORTED;
-			my $latitude = NOT_SUPPORTED;
-			my $longitude = NOT_SUPPORTED;
-			my $domain = NOT_SUPPORTED;
-			my $zipcode = NOT_SUPPORTED;
-			if ($COUNTRY_POSITION[$dbtype] != 0) {
-				$country_short = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
-				$country_long = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
-			}
-			if ($REGION_POSITION[$dbtype] != 0) {
-				$region = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($REGION_POSITION[$dbtype]-1)));
-			}
-			if ($CITY_POSITION[$dbtype] != 0) {
-				$city = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($CITY_POSITION[$dbtype]-1)));
-			}
-			if ($ISP_POSITION[$dbtype] != 0) {
-				$isp = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ISP_POSITION[$dbtype]-1)));
-			}
-			if ($LATITUDE_POSITION[$dbtype] != 0) {
-				$latitude = $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LATITUDE_POSITION[$dbtype]-1));
-			}
-			if ($LONGITUDE_POSITION[$dbtype] != 0) {
-				$longitude = $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LONGITUDE_POSITION[$dbtype]-1));
-			}
-			if ($DOMAIN_POSITION[$dbtype] != 0) {
-				$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
-			}
-			if ($ZIPCODE_POSITION[$dbtype] != 0) {
-				$zipcode = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
-			}			
-			return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $isp, $domain);
-		}
+	if ($realipno == MAX_IP_RANGE) {
+		$ipno = $realipno - 1;
 	} else {
-		while ($low <= $high) {
-			$mid = int(($low + $high)/2);
-			$ipfrom = $obj->read32($handle, $baseaddr + $mid * $dbcolumn * 4);
-			$ipto = $obj->read32($handle, $baseaddr + ($mid + 1) * $dbcolumn * 4);
-			if (($ipno >= $ipfrom) and ($ipno < $ipto)) {
-				if ($mode == COUNTRYSHORT) {
-					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
-				}
-				if ($mode == COUNTRYLONG) {
-					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
-				}
-				if ($mode == REGION) {
-					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($REGION_POSITION[$dbtype]-1)));
-				}
-				if ($mode == CITY) {
-					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($CITY_POSITION[$dbtype]-1)));
-				}
-				if ($mode == ISP) {
-					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ISP_POSITION[$dbtype]-1)));
-				}
-				if ($mode == LATITUDE) {
-					return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LATITUDE_POSITION[$dbtype]-1));
-				}
-				if ($mode == LONGITUDE) {
-					return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LONGITUDE_POSITION[$dbtype]-1));
-				}
-				if ($mode == DOMAIN) {
-					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
-				}
-				if ($mode == ZIPCODE) {
-					return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
-				}				
-				if ($mode == ALL) {
-					my $country_short = NOT_SUPPORTED;
-					my $country_long = NOT_SUPPORTED;
-					my $region = NOT_SUPPORTED;
-					my $city = NOT_SUPPORTED;
-					my $isp = NOT_SUPPORTED;
-					my $latitude = NOT_SUPPORTED;
-					my $longitude = NOT_SUPPORTED;
-					my $domain = NOT_SUPPORTED;
-					my $zipcode = NOT_SUPPORTED;
-					if ($COUNTRY_POSITION[$dbtype] != 0) {
-						$country_short = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
-						$country_long = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
-					}
-					if ($REGION_POSITION[$dbtype] != 0) {
-						$region = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($REGION_POSITION[$dbtype]-1)));
-					}
-					if ($CITY_POSITION[$dbtype] != 0) {
-						$city = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($CITY_POSITION[$dbtype]-1)));
-					}
-					if ($ISP_POSITION[$dbtype] != 0) {
-						$isp = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ISP_POSITION[$dbtype]-1)));
-					}
-					if ($LATITUDE_POSITION[$dbtype] != 0) {
-						$latitude = $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LATITUDE_POSITION[$dbtype]-1));
-					}
-					if ($LONGITUDE_POSITION[$dbtype] != 0) {
-						$longitude = $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LONGITUDE_POSITION[$dbtype]-1));
-					}
-					if ($DOMAIN_POSITION[$dbtype] != 0) {
-						$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
-					}
-					if ($ZIPCODE_POSITION[$dbtype] != 0) {
-						$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
-					}
-					return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $isp, $domain);
-				}
-			} else {
-				if ($ipno < $ipfrom) {
-					$high = $mid - 1;
-				} else {
-					$low = $mid + 1;
-				}	
+		$ipno = $realipno;
+	}
+
+	while ($low <= $high) {
+		$mid = int(($low + $high)/2);
+		$ipfrom = $obj->read32($handle, $baseaddr + $mid * $dbcolumn * 4);
+		$ipto = $obj->read32($handle, $baseaddr + ($mid + 1) * $dbcolumn * 4);
+		if (($ipno >= $ipfrom) and ($ipno < $ipto)) {
+			if ($mode == COUNTRYSHORT) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
 			}
+			if ($mode == COUNTRYLONG) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
+			}
+			if ($mode == REGION) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($REGION_POSITION[$dbtype]-1)));
+			}
+			if ($mode == CITY) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($CITY_POSITION[$dbtype]-1)));
+			}
+			if ($mode == ISP) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ISP_POSITION[$dbtype]-1)));
+			}
+			if ($mode == LATITUDE) {
+				return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LATITUDE_POSITION[$dbtype]-1));
+			}
+			if ($mode == LONGITUDE) {
+				return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LONGITUDE_POSITION[$dbtype]-1));
+			}
+			if ($mode == DOMAIN) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
+			}
+			if ($mode == ZIPCODE) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
+			}				
+			if ($mode == ALL) {
+				my $country_short = NOT_SUPPORTED;
+				my $country_long = NOT_SUPPORTED;
+				my $region = NOT_SUPPORTED;
+				my $city = NOT_SUPPORTED;
+				my $isp = NOT_SUPPORTED;
+				my $latitude = NOT_SUPPORTED;
+				my $longitude = NOT_SUPPORTED;
+				my $domain = NOT_SUPPORTED;
+				my $zipcode = NOT_SUPPORTED;
+				if ($COUNTRY_POSITION[$dbtype] != 0) {
+					$country_short = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
+					$country_long = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
+				}
+				if ($REGION_POSITION[$dbtype] != 0) {
+					$region = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($REGION_POSITION[$dbtype]-1)));
+				}
+				if ($CITY_POSITION[$dbtype] != 0) {
+					$city = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($CITY_POSITION[$dbtype]-1)));
+				}
+				if ($ISP_POSITION[$dbtype] != 0) {
+					$isp = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ISP_POSITION[$dbtype]-1)));
+				}
+				if ($LATITUDE_POSITION[$dbtype] != 0) {
+					$latitude = $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LATITUDE_POSITION[$dbtype]-1));
+				}
+				if ($LONGITUDE_POSITION[$dbtype] != 0) {
+					$longitude = $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LONGITUDE_POSITION[$dbtype]-1));
+				}
+				if ($DOMAIN_POSITION[$dbtype] != 0) {
+					$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
+				}
+				if ($ZIPCODE_POSITION[$dbtype] != 0) {
+					$zipcode = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
+				}
+				return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $isp, $domain);
+			}
+		} else {
+			if ($ipno < $ipfrom) {
+				$high = $mid - 1;
+			} else {
+				$low = $mid + 1;
+			}	
 		}
 	}
 	return UNKNOWN;
@@ -512,7 +451,7 @@ http://www.ip2location.com
 
 =head1 VERSION
 
-1.10
+1.30
 
 =head1 AUTHOR
 
