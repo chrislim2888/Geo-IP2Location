@@ -1,5 +1,10 @@
 Revision history for Perl extension Geo::IP2Location.
 
+2.00  Mon Feb 6 12:00:00 2006
+      Fifth release under the Geo::IP2Location
+      Added new support for IPv6 IP to Country lookup
+      Added free sample of IP2Location IPV6-COUNTRY database
+
 1.30  Thu Oct 13 16:59:58 2005
       Forth release under the Geo::IP2Location
       Fixed get_zipcode API to report proper ZIP code
