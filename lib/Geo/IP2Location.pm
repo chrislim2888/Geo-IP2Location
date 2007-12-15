@@ -4,7 +4,7 @@ use strict;
 use vars qw(@ISA $VERSION @EXPORT);
 use bigint;
 
-$VERSION = '2.00';
+$VERSION = '2.10';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -26,6 +26,10 @@ use constant IP_COUNTRY_REGION_CITY_ISP_DOMAIN => 7;
 use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ISP_DOMAIN => 8;
 use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ZIPCODE => 9;
 use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ZIPCODE_ISP_DOMAIN => 10;
+use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ZIPCODE_TIMEZONE => 11;
+use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ZIPCODE_TIMEZONE_ISP_DOMAIN => 12;
+use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_TIMEZONE_NETSPEED => 13;
+use constant IP_COUNTRY_REGION_CITY_LATITUDE_LONGITUDE_ZIPCODE_TIMEZONE_ISP_DOMAIN_NETSPEED => 14;
 use constant COUNTRYSHORT => 1;
 use constant COUNTRYLONG => 2;
 use constant REGION => 3;
@@ -35,27 +39,33 @@ use constant LATITUDE => 6;
 use constant LONGITUDE => 7;
 use constant DOMAIN => 8;
 use constant ZIPCODE => 9;
+use constant TIMEZONE => 10;
+use constant NETSPEED => 11;
 use constant ALL => 100;
 use constant IPV4 => 0;
 use constant IPV6 => 1;
 
-my @COUNTRY_POSITION = (0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2);
-my @REGION_POSITION = (0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3);
-my @CITY_POSITION = (0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4);
-my @ISP_POSITION = (0, 0, 3, 0, 5, 0, 7, 5, 7, 0, 8);
-my @LATITUDE_POSITION = (0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 5);
-my @LONGITUDE_POSITION = (0, 0, 0, 0, 0, 6, 6, 0, 6, 6, 6);
-my @DOMAIN_POSITION = (0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 9);
-my @ZIPCODE_POSITION = (0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7);
+my @COUNTRY_POSITION =   (0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2);
+my @REGION_POSITION =    (0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3);
+my @CITY_POSITION =      (0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4);
+my @ISP_POSITION =       (0, 0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9, 0, 9);
+my @LATITUDE_POSITION =  (0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5);
+my @LONGITUDE_POSITION = (0, 0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6);
+my @DOMAIN_POSITION =    (0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10,0, 10);
+my @ZIPCODE_POSITION =   (0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 7);
+my @TIMEZONE_POSITION =  (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 7, 8);
+my @NETSPEED_POSITION =  (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 11);
 
-my @IPV6_COUNTRY_POSITION = (0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2);
-my @IPV6_REGION_POSITION = (0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3);
-my @IPV6_CITY_POSITION = (0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4);
-my @IPV6_ISP_POSITION = (0, 0, 3, 0, 5, 0, 7, 5, 7, 0, 8);
-my @IPV6_LATITUDE_POSITION = (0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 5);
-my @IPV6_LONGITUDE_POSITION = (0, 0, 0, 0, 0, 6, 6, 0, 6, 6, 6);
-my @IPV6_DOMAIN_POSITION = (0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 9);
-my @IPV6_ZIPCODE_POSITION = (0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7);
+my @IPV6_COUNTRY_POSITION =   (0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2);
+my @IPV6_REGION_POSITION =    (0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3);
+my @IPV6_CITY_POSITION =      (0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4);
+my @IPV6_ISP_POSITION =       (0, 0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9, 0, 9);
+my @IPV6_LATITUDE_POSITION =  (0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5);
+my @IPV6_LONGITUDE_POSITION = (0, 0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6);
+my @IPV6_DOMAIN_POSITION =    (0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10,0, 10);
+my @IPV6_ZIPCODE_POSITION =   (0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 7);
+my @IPV6_TIMEZONE_POSITION =  (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 7, 8);
+my @IPV6_NETSPEED_POSITION =  (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 11);
 
 
 sub open {
@@ -183,6 +193,27 @@ sub get_domain {
 	}
 }
 
+sub get_timezone {
+	my ($obj) = shift(@_);
+	my $ipaddr = shift(@_);	
+	if ($obj->{"ipversion"} == IPV6) {
+		return $obj->get_ipv6_record($ipaddr, TIMEZONE);
+	} else {
+		return $obj->get_record($ipaddr, TIMEZONE);
+	}
+}
+
+sub get_netspeed {
+	my ($obj) = shift(@_);
+	my $ipaddr = shift(@_);	
+	if ($obj->{"ipversion"} == IPV6) {
+		return $obj->get_ipv6_record($ipaddr, NETSPEED);
+	} else {
+		return $obj->get_record($ipaddr, NETSPEED);
+	}
+}
+
+
 sub get_all {
 	my ($obj) = shift(@_);
 	my $ipaddr = shift(@_);	
@@ -209,7 +240,7 @@ sub get_ipv6_record {
 
 	if (!$obj->ip_is_ipv6($ipaddr)) {
 		if ($mode == ALL) {
-			return (INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS);
+			return (INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS, INVALID_IPV6_ADDRESS);
 		} else {
 			return INVALID_IPV6_ADDRESS;
 		}
@@ -242,6 +273,12 @@ sub get_ipv6_record {
 	if (($mode == ZIPCODE) && ($IPV6_ZIPCODE_POSITION[$dbtype] == 0)) {
 		return NOT_SUPPORTED;
 	}
+	if (($mode == TIMEZONE) && ($IPV6_TIMEZONE_POSITION[$dbtype] == 0)) {
+		return NOT_SUPPORTED;
+	}
+	if (($mode == NETSPEED) && ($IPV6_NETSPEED_POSITION[$dbtype] == 0)) {
+		return NOT_SUPPORTED;
+	}
 
 	$ipaddr = $obj->expand_ipv6_address($ipaddr);
 
@@ -272,33 +309,38 @@ sub get_ipv6_record {
 		
 		if (($ipno >= $ipfrom) and ($ipno < $ipto)) {
 			if ($mode == COUNTRYSHORT) {
-				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
-
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_COUNTRY_POSITION[$dbtype]-1)));
 			}
 			if ($mode == COUNTRYLONG) {
-				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_COUNTRY_POSITION[$dbtype]-1))+3);
 			}
 			if ($mode == REGION) {
-				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($REGION_POSITION[$dbtype]-1)));
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_REGION_POSITION[$dbtype]-1)));
 			}
 			if ($mode == CITY) {
-				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($CITY_POSITION[$dbtype]-1)));
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_CITY_POSITION[$dbtype]-1)));
 			}
 			if ($mode == ISP) {
-				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ISP_POSITION[$dbtype]-1)));
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_ISP_POSITION[$dbtype]-1)));
 			}
 			if ($mode == LATITUDE) {
-				return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LATITUDE_POSITION[$dbtype]-1));
+				return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_LATITUDE_POSITION[$dbtype]-1));
 			}
 			if ($mode == LONGITUDE) {
-				return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($LONGITUDE_POSITION[$dbtype]-1));
+				return $obj->readFloat($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_LONGITUDE_POSITION[$dbtype]-1));
 			}
 			if ($mode == DOMAIN) {
-				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_DOMAIN_POSITION[$dbtype]-1)));
 			}
 			if ($mode == ZIPCODE) {
-				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
-			}				
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_ZIPCODE_POSITION[$dbtype]-1)));
+			}
+			if ($mode == TIMEZONE) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_TIMEZONE_POSITION[$dbtype]-1)));
+			}
+			if ($mode == NETSPEED) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 12 + 4 * ($IPV6_NETSPEED_POSITION[$dbtype]-1)));
+			}
 			if ($mode == ALL) {
 				my $country_short = NOT_SUPPORTED;
 				my $country_long = NOT_SUPPORTED;
@@ -309,33 +351,42 @@ sub get_ipv6_record {
 				my $longitude = NOT_SUPPORTED;
 				my $domain = NOT_SUPPORTED;
 				my $zipcode = NOT_SUPPORTED;
+				my $timezone = NOT_SUPPORTED;
+				my $netspeed = NOT_SUPPORTED;
 
-				if ($COUNTRY_POSITION[$dbtype] != 0) {
-					$country_short = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
-					$country_long = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
+				if ($IPV6_COUNTRY_POSITION[$dbtype] != 0) {
+					$country_short = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_COUNTRY_POSITION[$dbtype]-1)));
+					$country_long = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_COUNTRY_POSITION[$dbtype]-1))+3);
 				}
-				if ($REGION_POSITION[$dbtype] != 0) {
-					$region = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($REGION_POSITION[$dbtype]-1)));
+				if ($IPV6_REGION_POSITION[$dbtype] != 0) {
+					$region = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_REGION_POSITION[$dbtype]-1)));
 				}
-				if ($CITY_POSITION[$dbtype] != 0) {
-					$city = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($CITY_POSITION[$dbtype]-1)));
+				if ($IPV6_CITY_POSITION[$dbtype] != 0) {
+					$city = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_CITY_POSITION[$dbtype]-1)));
 				}
-				if ($ISP_POSITION[$dbtype] != 0) {
-					$isp = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($ISP_POSITION[$dbtype]-1)));
+				if ($IPV6_ISP_POSITION[$dbtype] != 0) {
+					$isp = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_ISP_POSITION[$dbtype]-1)));
 				}
-				if ($LATITUDE_POSITION[$dbtype] != 0) {
-					$latitude = $obj->readFloat($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($LATITUDE_POSITION[$dbtype]-1));
+				if ($IPV6_LATITUDE_POSITION[$dbtype] != 0) {
+					$latitude = $obj->readFloat($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_LATITUDE_POSITION[$dbtype]-1));
 				}
-				if ($LONGITUDE_POSITION[$dbtype] != 0) {
-					$longitude = $obj->readFloat($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($LONGITUDE_POSITION[$dbtype]-1));
+				if ($IPV6_LONGITUDE_POSITION[$dbtype] != 0) {
+					$longitude = $obj->readFloat($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_LONGITUDE_POSITION[$dbtype]-1));
 				}
-				if ($DOMAIN_POSITION[$dbtype] != 0) {
-					$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($DOMAIN_POSITION[$dbtype]-1)));
+				if ($IPV6_DOMAIN_POSITION[$dbtype] != 0) {
+					$domain = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_DOMAIN_POSITION[$dbtype]-1)));
 				}
-				if ($ZIPCODE_POSITION[$dbtype] != 0) {
-					$zipcode = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
+				if ($IPV6_ZIPCODE_POSITION[$dbtype] != 0) {
+					$zipcode = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_ZIPCODE_POSITION[$dbtype]-1)));
 				}
-				return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $isp, $domain);
+				if ($IPV6_TIMEZONE_POSITION[$dbtype] != 0) {
+					$timezone = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_TIMEZONE_POSITION[$dbtype]-1)));
+				}
+				if ($IPV6_NETSPEED_POSITION[$dbtype] != 0) {
+					$netspeed = $obj->readStr($handle, $obj->read32($handle, $baseaddr + $mid * ($dbcolumn * 4 + 12) + 12 + 4 * ($IPV6_NETSPEED_POSITION[$dbtype]-1)));
+				}
+
+				return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $timezone, $isp, $domain, $netspeed);
 			}
 		} else {
 			if ($ipno < $ipfrom) {
@@ -364,7 +415,7 @@ sub get_record {
 
 	if (!$obj->ip_is_ipv4($ipaddr)) {
 		if ($mode == ALL) {
-			return (INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS);
+			return (INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS, INVALID_IPV4_ADDRESS);
 		} else {
 			return INVALID_IPV4_ADDRESS;
 		}
@@ -395,6 +446,12 @@ sub get_record {
 		return NOT_SUPPORTED;
 	}
 	if (($mode == ZIPCODE) && ($ZIPCODE_POSITION[$dbtype] == 0)) {
+		return NOT_SUPPORTED;
+	}
+	if (($mode == TIMEZONE) && ($TIMEZONE_POSITION[$dbtype] == 0)) {
+		return NOT_SUPPORTED;
+	}
+	if (($mode == NETSPEED) && ($NETSPEED_POSITION[$dbtype] == 0)) {
 		return NOT_SUPPORTED;
 	}
 
@@ -449,7 +506,14 @@ sub get_record {
 			}
 			if ($mode == ZIPCODE) {
 				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
-			}				
+			}
+			if ($mode == TIMEZONE) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($TIMEZONE_POSITION[$dbtype]-1)));
+			}
+			if ($mode == NETSPEED) {
+				return $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($NETSPEED_POSITION[$dbtype]-1)));
+			}
+
 			if ($mode == ALL) {
 				my $country_short = NOT_SUPPORTED;
 				my $country_long = NOT_SUPPORTED;
@@ -460,6 +524,9 @@ sub get_record {
 				my $longitude = NOT_SUPPORTED;
 				my $domain = NOT_SUPPORTED;
 				my $zipcode = NOT_SUPPORTED;
+				my $timezone = NOT_SUPPORTED;
+				my $netspeed = NOT_SUPPORTED;
+				
 				if ($COUNTRY_POSITION[$dbtype] != 0) {
 					$country_short = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1)));
 					$country_long = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($COUNTRY_POSITION[$dbtype]-1))+3);
@@ -485,7 +552,15 @@ sub get_record {
 				if ($ZIPCODE_POSITION[$dbtype] != 0) {
 					$zipcode = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($ZIPCODE_POSITION[$dbtype]-1)));
 				}
-				return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $isp, $domain);
+				if ($TIMEZONE_POSITION[$dbtype] != 0) {
+					$timezone = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($TIMEZONE_POSITION[$dbtype]-1)));
+				}
+				if ($NETSPEED_POSITION[$dbtype] != 0) {
+					$netspeed = $obj->readStr($handle, $obj->read32($handle, $baseaddr + ($mid * $dbcolumn * 4) + 4 * ($NETSPEED_POSITION[$dbtype]-1)));
+				}
+
+
+				return ($country_short, $country_long, $region, $city, $latitude, $longitude, $zipcode, $timezone, $isp, $domain, $netspeed);
 			}
 		} else {
 			if ($ipno < $ipfrom) {
@@ -606,7 +681,7 @@ sub ip_is_ipv4
 		return 0;
 	};
 	
-	if ($ip =~ m/^(\d+)$/ and $1 < 256) { return 1 };
+	#if ($ip =~ m/^(\d+)$/ and $1 < 256) { return 1 };
 
 	my $n = ($ip =~ tr/\./\./);
 
@@ -648,7 +723,7 @@ sub ip_is_ipv6
 
 		if ($k == $n+1)
 		{
-			next if (ip_is_ipv4($_));
+			next if ($obj->ip_is_ipv4($_));
 		};
 		return 0;
 	};
@@ -754,7 +829,7 @@ Geo::IP2Location - Fast lookup of country, region, city, latitude, longitude, ZI
 
 =head1 DESCRIPTION
 
-This Perl modules provide fast lookup of country, region, city, latitude, longitude, ISP and domain name from IP address by using IP2Location database. This module uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ISP and domain name as values. It supports both IP address in IPv4 and IPv6.
+This Perl modules provide fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name and connection type from IP address by using IP2Location database. This module uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ISP and domain name as values. It supports both IP address in IPv4 and IPv6.
 
 This module can be used in many types of projects such as:
 
@@ -826,7 +901,16 @@ Returns the domain name for an IP address or domain name.
 
 Returns the ZIP code for an IP address or domain name.
 
-=item ($cos, $col, $reg, $cit, $lat, $lon, $zip, $isp, $dom) = $obj->get_all( $ip );
+=item $tz = $obj->get_timezone( $ip );
+
+Returns the time zone for an IP address or domain name.
+
+=item $ns = $obj->get_netspeed( $ip );
+
+Returns the connection type (DIAL, DSL or COMP) for an IP address or domain name.
+
+
+=item ($cos, $col, $reg, $cit, $lat, $lon, $zip, $tz, $isp, $dom, $ns) = $obj->get_all( $ip );
 
 Returns an array of country short name, country long name, region, city, latitude, longitude and domain name for an IP address.
 
@@ -844,7 +928,7 @@ http://www.ip2location.com
 
 =head1 VERSION
 
-2.00
+2.10
 
 =head1 AUTHOR
 

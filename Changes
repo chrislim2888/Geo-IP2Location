@@ -1,5 +1,11 @@
 Revision history for Perl extension Geo::IP2Location.
 
+2.10  Mon Oct 16 12:00:00 2006
+      Sixth release under the Geo::IP2Location
+      Added new function "get_timezone"
+      Added new function "get_netspeed"
+      Fixed minor bugs in IPv6 Module
+
 2.00  Mon Feb 6 12:00:00 2006
       Fifth release under the Geo::IP2Location
       Added new support for IPv6 IP to Country lookup
