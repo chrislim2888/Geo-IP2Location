@@ -1,5 +1,23 @@
 Revision history for Perl extension Geo::IP2Location.
 
+5.00  Mon Apr 15 17:16:00 2012
+      Ninth release under the Geo::IP2Location
+      Added new function "get_elevation"
+      Added new function "get_usagetype"
+
+4.00  Mon Aug 09 12:00:00 2010
+      Eighth release under the Geo::IP2Location
+      Added new function "get_mcc"
+      Added new function "get_mnc"
+      Added new function "get_mobilebrand"
+
+3.00  Mon Aug 01 12:00:00 2008
+      Seventh release under the Geo::IP2Location
+      Added new function "get_iddcode"
+      Added new function "get_areacode"
+      Added new function "get_weatherstationcode"
+      Added new function "get_weatherstationname"
+
 2.10  Mon Oct 16 12:00:00 2006
       Sixth release under the Geo::IP2Location
       Added new function "get_timezone"
